@@ -1,33 +1,38 @@
 package stringDistance;
 
-import org.junit.*;
-import postprocessing.OutputResults;
-import postprocessing.Pair;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import postprocessing.knn.StringKNN;
+import postprocessing.Pair;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-public class SimpleMatchingCoefTest {
+import static org.junit.Assert.*;
+
+public class NormalisedLevenshteinTest {
 
     private static List<String> correct;
     private static List<String> misspell;
     private static List<String> correctWithoutDuplicates;
-    private static List<List<Pair>> results;
+    private static List<List<postprocessing.Pair>> results;
 
-    @BeforeClass
-    public static void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         correct= new ArrayList<String>();
         misspell= new ArrayList<String>();
 
+        System.out.println(new File(".").getAbsoluteFile());
 
         BufferedReader correctReader;
         BufferedReader misspellReader;
-        correctReader = new BufferedReader(new FileReader("/Users/mehdi/Google Drive/PhD/Word coding/Software/src/main/resources/output.txt"));
-        misspellReader= new BufferedReader(new FileReader("/Users/mehdi/Google Drive/PhD/Word coding/Software/src/main/resources/input.txt"));
+        correctReader = new BufferedReader(new FileReader("output.txt"));
+        misspellReader= new BufferedReader(new FileReader("input.txt"));
         String lineC;
         String lineM;
         while((lineC = correctReader.readLine()) !=null && (lineM = misspellReader.readLine()) !=null){
@@ -37,24 +42,12 @@ public class SimpleMatchingCoefTest {
         correctWithoutDuplicates = new ArrayList<String>(new HashSet<String>(correct));
         correctReader.close();
         misspellReader.close();
-
     }
 
-    @Test
-    public void DistanceTest(){
-        /*results = new ArrayList<List<Pair>>();
-        StringKNN knn = new StringKNN(5, new SimpleMatchingCoef());
-        for (int i =0; i<misspell.size();i++){
-            List<Pair> neighbors = knn.knn(misspell.get(i),correctWithoutDuplicates);
-            results.add(neighbors);
-        }*/
-
-    }
-
-    @AfterClass
-    public static void tearDown() throws Exception {
-        /*OutputResults outputResults = new OutputResults("SimpleMatchingCoefResults.txt");
-        OutputResults outputDistance = new OutputResults("SimpleMatchingCoefDistances.txt");
+    @After
+    public void tearDown() throws Exception {
+        postprocessing.OutputResults outputResults = new postprocessing.OutputResults("NormalisedLevenshteinResults.txt");
+        postprocessing.OutputResults outputDistance = new postprocessing.OutputResults("NormalisedLevenshteinDistances.txt");
         int performance1=0;
         int performancek=0;
 
@@ -81,6 +74,17 @@ public class SimpleMatchingCoefTest {
         outputResults.write("\n");
         outputResults.write((double) performancek/results.size());
         outputResults.close();
-        outputDistance.close();*/
+        outputDistance.close();
+
+    }
+
+    @Test
+    public void distance() {
+        results = new ArrayList<List<Pair>>();
+        postprocessing.knn.StringKNN knn = new StringKNN(5, new NormalisedLevenshtein());
+        for (int i =0; i<misspell.size();i++){
+            List<Pair> neighbors = knn.knn(misspell.get(i),correctWithoutDuplicates);
+            results.add(neighbors);
+        }
     }
 }

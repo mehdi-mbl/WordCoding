@@ -1,9 +1,8 @@
 package stringDistance;
 
-import org.junit.*;
-import postprocessing.OutputResults;
-import postprocessing.Pair;
-import postprocessing.knn.StringKNN;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -11,16 +10,19 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import postprocessing.knn.StringKNN;
+import postprocessing.Pair;
 
-public class EditTest {
+import static org.junit.Assert.*;
 
+public class DamerauLevenshteinTest {
     private static List<String> correct;
     private static List<String> misspell;
     private static List<String> correctWithoutDuplicates;
-    private static List<List<Pair>> results;
+    private static List<List<postprocessing.Pair>> results;
 
-    @BeforeClass
-    public static void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         correct= new ArrayList<String>();
         misspell= new ArrayList<String>();
 
@@ -39,24 +41,12 @@ public class EditTest {
         correctWithoutDuplicates = new ArrayList<String>(new HashSet<String>(correct));
         correctReader.close();
         misspellReader.close();
-
     }
 
-    @Test
-    public void DistanceTest(){
-        results = new ArrayList<List<Pair>>();
-        StringKNN knn = new StringKNN(5, new Edit());
-        for (int i =0; i<misspell.size();i++){
-            List<Pair> neighbors = knn.knn(misspell.get(i),correctWithoutDuplicates);
-            results.add(neighbors);
-        }
-
-    }
-
-    @AfterClass
-    public static void tearDown() throws Exception {
-        OutputResults outputResults = new OutputResults("EditResults.txt");
-        OutputResults outputDistance = new OutputResults("EditDistances.txt");
+    @After
+    public void tearDown() throws Exception {
+        postprocessing.OutputResults outputResults = new postprocessing.OutputResults("DamerauLevenshteinResults.txt");
+        postprocessing.OutputResults outputDistance = new postprocessing.OutputResults("DamerauLevenshteinDistances.txt");
         int performance1=0;
         int performancek=0;
 
@@ -84,5 +74,16 @@ public class EditTest {
         outputResults.write((double) performancek/results.size());
         outputResults.close();
         outputDistance.close();
+
+    }
+
+    @Test
+    public void distance() {
+        results = new ArrayList<List<Pair>>();
+        StringKNN knn = new StringKNN(5, new DamerauLevenshtein());
+        for (int i =0; i<misspell.size();i++){
+            List<Pair> neighbors = knn.knn(misspell.get(i),correctWithoutDuplicates);
+            results.add(neighbors);
+        }
     }
 }

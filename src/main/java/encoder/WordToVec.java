@@ -43,7 +43,7 @@ public class WordToVec {
         this.vec = new Word2Vec.Builder()
                 .minWordFrequency(1)
                 .iterations(300)
-                .layerSize(100)
+                .layerSize(36*8)
                 .seed(42)
                 .windowSize(5)
                 .iterate(iter)

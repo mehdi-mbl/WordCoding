@@ -19,13 +19,13 @@ public class WordToVecTest {
 
     @Test
     public void DistanceTest(){
-        //wordToVec.train();
+        wordToVec.train();
 
     }
 
     @AfterClass
     public static void tearDown() {
-        //wordToVec.writeResults("word2vec.model");
+        wordToVec.writeResults("word2vec.model");
 
     }
 

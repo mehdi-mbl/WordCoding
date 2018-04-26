@@ -1,9 +1,7 @@
 package main;
 
 import activations.Sigmoid;
-import encoder.ContextEncoder;
-import encoder.DenoisingAutoEncoder;
-import encoder.StochasticGradientDescent;
+import encoder.*;
 import postprocessing.Serializer;
 import vectorDistance.CosineDivergence;
 
@@ -34,14 +32,15 @@ public class Main {
         String lineC;
         String lineM;
         while((lineC = correctReader.readLine()) !=null && (lineM = misspellReader.readLine()) !=null) {
-            correct.add(lineC);
-            misspell.add(lineM);
+            correct.add(lineC.toLowerCase());
+            misspell.add(lineM.toLowerCase());
         }
 
         correctWithoutDuplicates = new ArrayList(new HashSet(correct));
 
-        ContextEncoder vector= new ContextEncoder("word2vec.model");
-        encoder= new DenoisingAutoEncoder(100,20,new CosineDivergence(),vector,new Sigmoid());
+        Encoder fallDown = new OneHot(36*8);
+        ContextEncoder vector= new ContextEncoder("word2vec.model",fallDown);
+        encoder= new DenoisingAutoEncoder(36*8,20,new CosineDivergence(),vector,new Sigmoid());
         StochasticGradientDescent descent = new StochasticGradientDescent(encoder,50,100,0.001,misspell,correct,correctWithoutDuplicates);
         descent.MultithreadGradientDescent();
         descent.NewGradientDescent();
