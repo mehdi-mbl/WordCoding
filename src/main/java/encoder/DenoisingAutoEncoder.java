@@ -187,14 +187,17 @@ public class DenoisingAutoEncoder implements Encoder, Serializable {
     }
 	
 	public double[][] deltaW(String input, String expected){
+		System.out.println("delta w");
 		double [][] delta = new double [this.W.length][this.W[0].length];
 		for (int i =0; i<this.W.length; i++){
+			System.out.println(i);
 			for (int j =0; j<this.W[i].length; j++){
 				delta[i][j]= MatrixOperation.multiply(this.distance.derivate(o(input), this.initializer.encode(expected)),
 						MatrixOperation.dotmultiply( oPrime(input),
 								MatrixOperation.multiply( this.Wstar, gPrime(input))))*this.initializer.encode(input)[j];
 			}
 		}
+		System.out.println("deltaW finished");
 		return delta;
 	}
 	

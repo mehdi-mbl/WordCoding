@@ -38,12 +38,11 @@ public class Main {
 
         correctWithoutDuplicates = new ArrayList(new HashSet(correct));
 
-        Encoder fallDown = new OneHot(36*8);
+        Encoder fallDown = new ByteEncoder(36*8);
         ContextEncoder vector= new ContextEncoder("word2vec.model",fallDown);
-        encoder= new DenoisingAutoEncoder(36*8,20,new CosineDivergence(),vector,new Sigmoid());
-        StochasticGradientDescent descent = new StochasticGradientDescent(encoder,50,100,0.001,misspell,correct,correctWithoutDuplicates);
-        descent.MultithreadGradientDescent();
-        descent.NewGradientDescent();
+        encoder= new DenoisingAutoEncoder(36*8,12,new CosineDivergence(),vector,new Sigmoid());
+        StochasticGradientDescent descent = new StochasticGradientDescent(encoder,50,100,0.001,misspell,correct);
+        descent.GradientDescent();
 
         postprocessing.Serializer serializer= new Serializer();
         serializer.serialize(encoder,"encoder.model");

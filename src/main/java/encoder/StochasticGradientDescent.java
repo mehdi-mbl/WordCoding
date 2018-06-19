@@ -11,9 +11,12 @@ public class StochasticGradientDescent {
 	private List<String> input;
 	private List<String> output;
 	private List<String> c;
-	
-	
-	public StochasticGradientDescent(DenoisingAutoEncoder encoder, int BatchSize, int iterations, double learningRate, List<String> input, List<String> output){
+
+    public StochasticGradientDescent() {
+        super();
+    }
+
+    public StochasticGradientDescent(DenoisingAutoEncoder encoder, int BatchSize, int iterations, double learningRate, List<String> input, List<String> output){
 		this.BatchSize=BatchSize;
 		this.alpha=learningRate;
 		this.input=input;
@@ -36,6 +39,7 @@ public class StochasticGradientDescent {
 		for(int i=0; i< this.iterations;i++){
 			int j=0;
 			while(j+this.BatchSize<= input.size()){
+				System.out.println("Batch "+j);
 				this.encoder.setW(Descent(this.encoder.getW(), grad("W",j)));
 				this.encoder.setWstar(Descent(this.encoder.getWstar(), grad("Wstar",j)));
 				this.encoder.setB(Descent(this.encoder.getB(), grad("b",j)[0]));
@@ -62,20 +66,28 @@ public class StochasticGradientDescent {
         }
     }
 
-	public void MultithreadGradientDescent () throws Exception{
+	public void MultithreadGradientDescent () {
 		for(int i=0; i< this.iterations;i++){
 			int j=0;
 			while(j+this.BatchSize<= input.size()){
+			    System.out.println("batch= "+j);
 				UpdateW updateW = new UpdateW(this.encoder, j, this.BatchSize, this.input, this.output, this.c);
 				UpdateWstar updateWstar = new UpdateWstar(this.encoder, j, this.BatchSize, this.input, this.output, this.c);
 				UpdateB updateB = new UpdateB(this.encoder, j, this.BatchSize, this.input, this.output, this.c);
 				UpdateC updateC = new UpdateC(this.encoder, j, this.BatchSize, this.input, this.output, this.c);
-				updateW.start();
-				updateWstar.start();
-				updateB.start();
-				updateC.start();
+				//updateW.start();
+				//updateWstar.start();
+				//updateB.start();
+				//updateC.start();
+				UpdateParameters update = new UpdateParameters(updateW,updateWstar,updateB,updateC);
+				update.start();
 
-				try {
+				//while (update.getUpdate().isAlive()){
+				//    System.out.println(update.getUpdate().isAlive());
+
+               // }
+
+				/*try {
 					updateW.getUpdateWthread().join(1000);
 					updateWstar.getUpdateWstarthread().join(1000);
 					updateB.getUpdateBthread().join(1000);
@@ -83,7 +95,7 @@ public class StochasticGradientDescent {
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				}
+				}*/
 
 				this.encoder.setW(Descent(this.encoder.getW(), updateW.getG()));
 
@@ -94,10 +106,13 @@ public class StochasticGradientDescent {
 				this.encoder.setC(Descent(this.encoder.getC(), updateC.getG()[0]));
 				j+=this.BatchSize;
 			}
+			System.out.println("Iteration finished");
+            System.out.println("Loss after "+i+" iterations is: "+averageNewLoss());
 		}
 	}
 	
 	public double[][] Descent(double[][] parameters, double[][] grad){
+    	System.out.println("descent");
 		double[][] UpdatedParameters= new double[parameters.length][parameters[0].length];
 		for (int i=0; i<parameters.length; i++){
 			for (int j=0; j<parameters[i].length; j++){
@@ -108,6 +123,7 @@ public class StochasticGradientDescent {
 	}
 	
 	public double[] Descent(double[] parameters, double[] grad){
+		System.out.println("descent");
 		double[] UpdatedParameters= new double[parameters.length];
 		for (int i=0; i<parameters.length; i++){
 			parameters[i]=parameters[i]-(this.alpha/this.BatchSize)*grad[i];
@@ -117,32 +133,34 @@ public class StochasticGradientDescent {
 
 	public double[][] grad(String s, int start){
 		double[][] g;
+		System.out.println("grad for "+s);
 		if (s=="W"){
 			g= new double[this.encoder.getW().length][this.encoder.getW()[0].length];
 			g=MatrixOperation.intialize(g, 0);
 			for (int i=start; i<start+this.BatchSize && i<this.input.size(); i++){
-				this.encoder.o(input.get(i));
+				//this.encoder.o(input.get(i));
+				System.out.println("compute grad");
 				g=MatrixOperation.add(g, this.encoder.deltaW(this.input.get(i),this.output.get(i)));
 			}
 		}else if (s=="Wstar"){
 			g= new double[this.encoder.getWstar().length][this.encoder.getWstar()[0].length];
 			g=MatrixOperation.intialize(g, 0);
 			for (int i=start; i<start+this.BatchSize && i<this.input.size(); i++){
-				this.encoder.o(input.get(i));
+				//this.encoder.o(input.get(i));
 				g=MatrixOperation.add(g, this.encoder.deltaWstar(this.input.get(i),this.output.get(i)));
 			}
 		}else if (s=="b"){
 			g= new double[1][this.encoder.getB().length];
 			g=MatrixOperation.intialize(g, 0);
 			for (int i=start; i<start+this.BatchSize && i<this.input.size(); i++){
-				this.encoder.o(input.get(i));
+				//this.encoder.o(input.get(i));
 				g[0]=MatrixOperation.add(g[0], this.encoder.deltab(this.input.get(i),this.output.get(i)));
 			}
 		}else {
 			g= new double[1][this.encoder.getC().length];
 			g=MatrixOperation.intialize(g, 0);
 			for (int i=start; i<start+this.BatchSize && i<this.input.size(); i++){
-				this.encoder.o(input.get(i));
+				//this.encoder.o(input.get(i));
 				g[0]=MatrixOperation.add(g[0], this.encoder.deltac(this.input.get(i),this.output.get(i)));
 			}
 		}
@@ -199,5 +217,59 @@ public class StochasticGradientDescent {
         return loss/this.input.size();
     }
 
+    public void setBatchSize(int batchSize) {
+        BatchSize = batchSize;
+    }
 
+    public void setIterations(int iterations) {
+        this.iterations = iterations;
+    }
+
+    public void setAlpha(double alpha) {
+        this.alpha = alpha;
+    }
+
+    public void setEncoder(DenoisingAutoEncoder encoder) {
+        this.encoder = encoder;
+    }
+
+    public void setInput(List<String> input) {
+        this.input = input;
+    }
+
+    public void setOutput(List<String> output) {
+        this.output = output;
+    }
+
+    public void setC(List<String> c) {
+        this.c = c;
+    }
+
+    public int getBatchSize() {
+        return BatchSize;
+    }
+
+    public int getIterations() {
+        return iterations;
+    }
+
+    public double getAlpha() {
+        return alpha;
+    }
+
+    public DenoisingAutoEncoder getEncoder() {
+        return encoder;
+    }
+
+    public List<String> getInput() {
+        return input;
+    }
+
+    public List<String> getOutput() {
+        return output;
+    }
+
+    public List<String> getC() {
+        return c;
+    }
 }
